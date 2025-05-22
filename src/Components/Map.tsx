@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix default icon issues with Leaflet + React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -14,16 +13,6 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-function LocationMarker({ onClick }: { onClick: (latlng: L.LatLng) => void }) {
-  // useMapEvents lets you listen to map events inside a component
-  useMapEvents({
-    click(e) {
-      onClick(e.latlng);
-    },
-  });
-  return null; // no UI here, just event handling
-}
-
 const normaliseLng = (lng: number) => {
   return ((((lng + 180) % 360) + 360) % 360) - 180;
 };
@@ -31,6 +20,7 @@ const normaliseLng = (lng: number) => {
 const sendCoordinatesToBackend = async (coords: {
   lat: number;
   lng: number;
+  country: string;
 }) => {
   try {
     const response = await fetch("http://localhost:8000/coordinates", {
@@ -52,13 +42,33 @@ const sendCoordinatesToBackend = async (coords: {
   }
 };
 
-function ClickHandler() {
+function ClickHandler({
+  setClickedPosition,
+  setClickedCountry,
+}: {
+  setClickedPosition: (pos: L.LatLng) => void;
+  setClickedCountry: (country: string) => void;
+}) {
   useMapEvents({
-    click(e) {
+    click: async (e) => {
       const { lat, lng } = e.latlng;
       const normalizedLng = normaliseLng(lng);
+
+      setClickedPosition(e.latlng);
       console.log("Clicked coordinates:", lat, normalizedLng);
-      sendCoordinatesToBackend({ lat, lng: normalizedLng });
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${normalizedLng}`
+        );
+        const data = await response.json();
+        const country = data?.address?.country || "Unknown";
+
+        setClickedCountry(country);
+        sendCoordinatesToBackend({ lat, lng: normalizedLng, country });
+      } catch (err) {
+        console.error("Reverse geocoding failed:", err);
+      }
     },
   });
 
@@ -67,6 +77,7 @@ function ClickHandler() {
 
 const Map = () => {
   const [clickedPosition, setClickedPosition] = useState<L.LatLng | null>(null);
+  const [clickedCountry, setClickedCountry] = useState<string | null>(null);
 
   return (
     <div
@@ -92,19 +103,19 @@ const Map = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-        {/* Attach the click handler */}
-        <LocationMarker onClick={(latlng) => setClickedPosition(latlng)} />
-
-        {/* If we have a clicked position, render a marker */}
+        {/* Unified Click Handler */}
+        <ClickHandler
+          setClickedPosition={setClickedPosition}
+          setClickedCountry={setClickedCountry}
+        />
         {clickedPosition && <Marker position={clickedPosition} />}
-        <ClickHandler />
       </MapContainer>
 
-      {/* Display clicked coordinates */}
       {clickedPosition && (
         <div style={{ marginTop: 10, color: "#333" }}>
           Clicked location: Latitude: {clickedPosition.lat.toFixed(5)},
-          Longitude: {normaliseLng(clickedPosition.lng).toFixed(5)}
+          Longitude: {normaliseLng(clickedPosition.lng).toFixed(5)} <br />
+          Country: {clickedCountry || "Loading..."}
         </div>
       )}
     </div>
