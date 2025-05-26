@@ -5,7 +5,8 @@ from pydantic import BaseModel, field_validator
 from fastapi.middleware.cors import CORSMiddleware
 from dateutil import parser
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from helper_functions import helper_functions as hf
 
 
 
@@ -46,9 +47,48 @@ def country_name_to_code(name):
     except:
         return None
 
+@app.post("/predict")
+async def receive_coordinates(coords: Coordinates):
+    now = datetime.now(timezone.utc)
+    country_alpha = country_name_to_code(coords.country)
+    country_id = hf.country_code(country_alpha)
+
+    day = now.day
+    month = now.month
+    year = now.year
+
+    weather_summary = hf.create_weather_data(coords.lat, coords.lng, day, month, year)
+
+    continent_id = hf.continent_code(country_alpha)
+
+    # input_list = [
+    #     -1,                              # Unnamed: 0
+    #     -1,                              # site_id
+    #     coords.lat,                      # latitude
+    #     coords.lng,                      # longitude
+    #     country_id[0],                   # country code id
+    #     month,                           # month_start
+    #     year,                            # year_start
+    #     month,                           # month_end (same as start here)
+    #     year,                            # year_end
+    #     weather_summary['month high'],   # month high
+    #     weather_summary['month low'],    # month low
+    #     weather_summary['month mean'],   # month mean
+    #     weather_summary['temp range'],   # temp range
+    #     weather_summary['total rain'],   # total rain
+    #     weather_summary['most rain'],    # most rain
+    #     weather_summary['most wind'],    # most wind
+    #     continent_id,                    # continentId
+    #     country_id[1]                    # mean_cases
+    # ]
+    # print(f"{input_list}")
+
+    return ()
 
 
-@app.post("/coordinates")
+
+
+@app.post("/weather")
 async def receive_coordinates(coords: Coordinates):
     now = datetime.utcnow()
     today = now.date()
@@ -116,3 +156,5 @@ async def receive_coordinates(coords: Coordinates):
         "most_rain": most_rain,
         "day_wind_speed": day_wind_speed,
     }
+
+

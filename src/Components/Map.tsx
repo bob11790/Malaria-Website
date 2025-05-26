@@ -23,7 +23,7 @@ const sendCoordinatesToBackend = async (coords: {
   country: string;
 }) => {
   try {
-    const response = await fetch("http://localhost:8000/coordinates", {
+    const response = await fetch("http://localhost:8000/predict", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
