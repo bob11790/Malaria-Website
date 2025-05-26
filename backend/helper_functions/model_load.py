@@ -15,11 +15,9 @@ def predict(input: list) -> float:
 MODEL = ydf.load_model("ydf_malaria_weather_model")
 
 INPUT_FORMAT = [
-    "Unnamed: 0", # -1
-    "site_id",# -1
     "latitude", # float
     "longitude", # float
-    "country",# country code() -> tuple[0]
+    "country",# country code() -> tuple[0] -> str
     "month_start", # int (single number)
     "year_start",# int (single number)
     "month_end", # same as start
@@ -31,7 +29,7 @@ INPUT_FORMAT = [
     "total rain", #create_weather_data -> summary['total rain']
     "most rain", #create_weather_data -> summary['most rain']
     "most wind", #create_weather_data -> summary['most wind']
-    "continentId",# continent_code() -> int
+    "continentId",# continent_code() -> str 
     "mean_cases",# country code() -> tuple[1]
 ]
 

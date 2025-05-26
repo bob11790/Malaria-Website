@@ -5,19 +5,19 @@ import calendar
 import pandas as pd
 
 
-def continent_code(country: str) -> int:
+def continent_code(country: str) -> str:
     continent = alpha3_to_continent(country)
     if continent in CONT_MAP:
         return CONT_MAP[continent]
     else:
-        return -1
+        return "-1"
 
 def country_code(country: str) -> tuple:
     if country in PYCOUNTRY_MAP:
         id_mean = (PYCOUNTRY_MAP[country]["id"], PYCOUNTRY_MAP[country]["mean"])
         return id_mean
     else:
-        return (-1, 0)
+        return ("-1", 0)
 
 def create_weather_data(lat: float, lon: float, day: int, month: int, year: int) -> dict:
 
