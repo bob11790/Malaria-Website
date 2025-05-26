@@ -16,21 +16,21 @@ MODEL = ydf.Model.load("../../ydf_malaria_weather_model/ydf_malaria_weather_mode
 INPUT_FORMAT = [
     "Unnamed: 0", # -1
     "site_id",# -1
-    "latitude", 
-    "longitude",
-    "country",
-    "month_start",
-    "year_start",
+    "latitude", # float
+    "longitude", # float
+    "country",# country code() -> tuple[0]
+    "month_start", # int (single number)
+    "year_start",# int (single number)
     "month_end", # same as start
     "year_end", # same as start
-    "month high",
-    "month low",
-    "month mean",
-    "temp range",
-    "total rain",
-    "most rain",
-    "most wind",
-    "continentId",
-    "mean_cases",
+    "month high", #create_weather_data -> summary['month high']
+    "month low", #create_weather_data -> summary['month low']
+    "month mean", #create_weather_data -> summary['month mean']
+    "temp range", #create_weather_data -> summary['temp range']
+    "total rain", #create_weather_data -> summary['total rain']
+    "most rain", #create_weather_data -> summary['most rain']
+    "most wind", #create_weather_data -> summary['most wind']
+    "continentId",# continent_code() -> int
+    "mean_cases",# country code() -> tuple[1]
 ]
 
