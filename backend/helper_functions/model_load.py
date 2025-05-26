@@ -32,7 +32,7 @@ DAY = 27
 MONTH = 5
 YEAR = 2025
 WEATHER = create_weather_data(LAT,LON,DAY,MONTH,YEAR)
-COUNTRY_INFO = country_code("Australia")
+COUNTRY_INFO = country_code("AUS")
 COUNTRY = COUNTRY_INFO[0]
 COUNTRY_MEAN = COUNTRY_INFO[1]
 
@@ -57,7 +57,7 @@ INPUT_VAL = [
 
 MODEL = ydf.load_model("backend/ydf_malaria_weather_model")
 
-def predict(lat:float, lon:float,country:str,continent:str, day:int ,month:int ,year:int ) -> float:
+def predict(lat:float, lon:float,countryA3:str,continent:str, day:int ,month:int ,year:int ) -> float:
     LOCATION = (37.8136, 144.9631)
     LAT = lat
     LON = lon
@@ -65,7 +65,7 @@ def predict(lat:float, lon:float,country:str,continent:str, day:int ,month:int ,
     MONTH = month
     YEAR = year
     WEATHER = create_weather_data(LAT,LON,DAY,MONTH,YEAR)
-    COUNTRY_INFO = country_code(country)
+    COUNTRY_INFO = country_code(countryA3)
     COUNTRY = COUNTRY_INFO[0]
     COUNTRY_MEAN = COUNTRY_INFO[1]
     _in = pd.DataFrame([INPUT_VAL], columns=INPUT_FORMAT)
