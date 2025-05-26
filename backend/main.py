@@ -1,5 +1,6 @@
 import httpx
 import pycountry
+import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel, field_validator
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,7 @@ from dateutil import parser
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from helper_functions import helper_functions as hf
+from helper_functions import model_load as model
 
 
 
@@ -61,31 +63,38 @@ async def receive_coordinates(coords: Coordinates):
 
     continent_id = hf.continent_code(country_alpha)
 
-    # input_list = [
-    #     -1,                              # Unnamed: 0
-    #     -1,                              # site_id
-    #     coords.lat,                      # latitude
-    #     coords.lng,                      # longitude
-    #     country_id[0],                   # country code id
-    #     month,                           # month_start
-    #     year,                            # year_start
-    #     month,                           # month_end (same as start here)
-    #     year,                            # year_end
-    #     weather_summary['month high'],   # month high
-    #     weather_summary['month low'],    # month low
-    #     weather_summary['month mean'],   # month mean
-    #     weather_summary['temp range'],   # temp range
-    #     weather_summary['total rain'],   # total rain
-    #     weather_summary['most rain'],    # most rain
-    #     weather_summary['most wind'],    # most wind
-    #     continent_id,                    # continentId
-    #     country_id[1]                    # mean_cases
-    # ]
-    # print(f"{input_list}")
+    input_list = [
+        -1,                              # Unnamed: 0
+        -1,                              # site_id
+        coords.lat,                      # latitude
+        coords.lng,                      # longitude
+        country_id[0],                   # country code id
+        month,                           # month_start
+        year,                            # year_start
+        month,                           # month_end (same as start here)
+        year,                            # year_end
+        weather_summary['month high'],   # month high
+        weather_summary['month low'],    # month low
+        weather_summary['month mean'],   # month mean
+        weather_summary['temp range'],   # temp range
+        weather_summary['total rain'],   # total rain
+        weather_summary['most rain'],    # most rain
+        weather_summary['most wind'],    # most wind
+        continent_id,                    # continentId
+        country_id[1]                    # mean_cases
+    ]
+    # Convert NumPy floats/ints to native Python types
+    input_list = [
+        float(x) if isinstance(x, np.floating)
+        else int(x) if isinstance(x, np.integer)
+        else x
+        for x in input_list
+    ]
+    print(f"{input_list}")
 
-    return ()
-
-
+    prediction = model.predict(input_list)
+    print(f"{prediction}")
+    return (prediction)
 
 
 @app.post("/weather")

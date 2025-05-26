@@ -1,5 +1,6 @@
 import ydf
 import pandas as pd
+import ydf.model
 
 # just put in an list based on the INPUT_FORMAT
 # the function will convert it to a dataframe
@@ -11,7 +12,7 @@ def predict(input: list) -> float:
     df = pd.DataFrame([input], columns=INPUT_FORMAT)
     return float(MODEL.predict(df)[0])
 
-MODEL = ydf.Model.load("../../ydf_malaria_weather_model/ydf_malaria_weather_model/")
+MODEL = ydf.load_model("ydf_malaria_weather_model")
 
 INPUT_FORMAT = [
     "Unnamed: 0", # -1

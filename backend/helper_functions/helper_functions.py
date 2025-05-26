@@ -1,8 +1,9 @@
-from meteostat import Point, Daily
+from meteostat import Point, Daily, Stations
 from datetime import datetime, timedelta
 import pycountry_convert as pc
 import calendar
 import pandas as pd
+
 
 def continent_code(country: str) -> int:
     continent = alpha3_to_continent(country)
@@ -19,13 +20,14 @@ def country_code(country: str) -> tuple:
         return (-1, 0)
 
 def create_weather_data(lat: float, lon: float, day: int, month: int, year: int) -> dict:
-    print(f"entry data: {lat, lon, day, month, year }")
-    #72 hour weather summary
+
+    #7 day weather summary
     summary = {col: 0 for col in WEATHER_COLS} # safely creates keys with 0 intialised
-    location = Point(lat, lon)
-    start_day = datetime(year, month, day) - timedelta(days=1)
-    end_day   = datetime(year, month, day) + timedelta(days=1)
-    
+    station = Stations()
+    location = station.nearby(lat,lon).fetch(1)
+    start_day = datetime(year, month, day) - timedelta(days=7) # gets the last week
+    end_day   = datetime(year, month, day)
+  
     #meteo stat
     weather = Daily(location, start_day, end_day).fetch()
 
@@ -43,7 +45,7 @@ def create_weather_data(lat: float, lon: float, day: int, month: int, year: int)
         summary['most rain']  = weather['prcp'].max()
     if 'wspd' in weather.columns:
         summary['most wind']  = weather['wspd'].max()
-    print(f"summary: {summary, weather.columns}")
+
     return summary # plug this right into the input for the model
 
 def alpha3_to_continent(alpha3):
@@ -69,9 +71,6 @@ def alpha3_to_continent(alpha3):
         # Handle missing/invalid alpha3 codes here
         print(f"Warning: Could not map {alpha3} to continent: {e}")
         return None
-
-
-
 
 WEATHER_COLS = [
     'month high',
