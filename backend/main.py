@@ -1,3 +1,12 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+import logging
+logging.getLogger('absl').setLevel(logging.ERROR)
+
 import httpx
 import pycountry
 import numpy as np
@@ -61,11 +70,9 @@ async def receive_coordinates(coords: Coordinates):
 
     weather_summary = hf.create_weather_data(coords.lat, coords.lng, day, month, year)
 
-    continent_id = hf.continent_code(country_alpha)
+    continent = hf.alpha3_to_continent(country_alpha)
 
     input_list = [
-        -1,                              # Unnamed: 0
-        -1,                              # site_id
         coords.lat,                      # latitude
         coords.lng,                      # longitude
         country_id[0],                   # country code id
@@ -80,7 +87,7 @@ async def receive_coordinates(coords: Coordinates):
         weather_summary['total rain'],   # total rain
         weather_summary['most rain'],    # most rain
         weather_summary['most wind'],    # most wind
-        continent_id,                    # continentId
+        continent,                    # continentId
         country_id[1]                    # mean_cases
     ]
     # Convert NumPy floats/ints to native Python types
@@ -90,11 +97,34 @@ async def receive_coordinates(coords: Coordinates):
         else x
         for x in input_list
     ]
-    print(f"{input_list}")
+    print("Input Data:")
+    print(f"  Latitude: {coords.lat}")
+    print(f"  Longitude: {coords.lng}")
+    print(f"  Country: {coords.country}")
+    print(f"  Continent: {continent}")
+    print(f"  Date: {day}/{month}/{year}")
+    input_labels = [
+    "Latitude", "Longitude", "Country Code",
+    "Month_start", "Year_start", "Month_end", "Year_end",
+    "month_high", "month_low", "month_mean", "temp_range",
+    "total_rain", "most_rain", "most_wind", "Continent", "mean_cases"
+]
 
-    prediction = model.predict(input_list)
-    print(f"{prediction}")
-    return (prediction)
+    # Format input as a single line table with label=value pairs:
+    cleaned_items = []
+    for label, value in zip(input_labels, input_list):
+        if isinstance(value, float) and (value != value):  # check for nan
+            value = "NaN"
+        cleaned_items.append(f"{label}={value}")
+
+    print(" | ".join(cleaned_items))
+
+    prediction = model.predict(coords.lat, coords.lng, coords.country, continent, day, month, year)
+    prediction = prediction * 100
+    if prediction < 0:
+        prediction = 0
+    print(f"Prediction result: %{prediction:.2f}")
+    return {"prediction": float(prediction)}
 
 
 @app.post("/weather")

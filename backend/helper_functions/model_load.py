@@ -1,11 +1,11 @@
 import ydf
 import pandas as pd
 import ydf.model
-from helper_functions import continent_code, country_code, create_weather_data 
+from helper_functions import helper_functions as hf
 
 INPUT_FORMAT = [
     "latitude", # float
-    "LONitude", # float
+    "longitude", # float
     "country",# country code() -> tuple[0] -> str
     "month_start", # int (single number)
     "year_start",# int (single number)
@@ -31,8 +31,8 @@ LON = LOCATION[1]
 DAY = 27
 MONTH = 5
 YEAR = 2025
-WEATHER = create_weather_data(LAT,LON,DAY,MONTH,YEAR)
-COUNTRY_INFO = country_code("AUS")
+WEATHER = hf.create_weather_data(LAT,LON,DAY,MONTH,YEAR)
+COUNTRY_INFO = hf.country_code("AUS")
 COUNTRY = COUNTRY_INFO[0]
 COUNTRY_MEAN = COUNTRY_INFO[1]
 
@@ -51,26 +51,39 @@ INPUT_VAL = [
     WEATHER["total rain"],
     WEATHER["most rain"],
     WEATHER["month high"],
-    continent_code("Oceana"),
+    hf.continent_code("Oceania"),
     COUNTRY_MEAN
     ]
 
-MODEL = ydf.load_model("backend/ydf_malaria_weather_model")
+MODEL = ydf.load_model("ydf_malaria_weather_model")
 
-def predict(lat:float, lon:float,countryA3:str,continent:str, day:int ,month:int ,year:int ) -> float:
-    LOCATION = (37.8136, 144.9631)
-    LAT = lat
-    LON = lon
-    DAY = day
-    MONTH = month
-    YEAR = year
-    WEATHER = create_weather_data(LAT,LON,DAY,MONTH,YEAR)
-    COUNTRY_INFO = country_code(countryA3)
-    COUNTRY = COUNTRY_INFO[0]
-    COUNTRY_MEAN = COUNTRY_INFO[1]
-    _in = pd.DataFrame([INPUT_VAL], columns=INPUT_FORMAT)
-    return MODEL.predict(_in)[0]
+def predict(lat: float, lon: float, countryA3: str, continent: int, day: int, month: int, year: int) -> float:
+    WEATHER = hf.create_weather_data(lat, lon, day, month, year)
+    COUNTRY, COUNTRY_MEAN = hf.country_code(countryA3)
 
+    # Build dictionary using INPUT_FORMAT keys
+    input_data = {
+        "latitude": lat,
+        "longitude": lon,
+        "country": COUNTRY,
+        "month_start": month,
+        "year_start": year,
+        "month_end": month,
+        "year_end": year,
+        "month high": WEATHER.get("month high"),
+        "month low": WEATHER.get("month low"),
+        "month mean": WEATHER.get("month mean"),
+        "temp range": WEATHER.get("temp range"),
+        "total rain": WEATHER.get("total rain"),
+        "most rain": WEATHER.get("most rain"),
+        "most wind": WEATHER.get("most wind"),
+        "continentId": continent,
+        "mean_cases": COUNTRY_MEAN
+    }
+
+    _in = pd.DataFrame([input_data], columns=INPUT_FORMAT)
+    prediction = MODEL.predict(_in)[0]
+    return float(prediction)
 
 ## debug path:
 # import os
