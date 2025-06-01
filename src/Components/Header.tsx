@@ -1,20 +1,14 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { AppBar, Toolbar, Typography } from "@mui/material";
 
-const Header = () => {
-  return (
-    <header
-      style={{
-        height: "100px",
-        display: "flex",
-        width: "100%",
-        alignItems: "center",
-        backgroundColor: "#b8bfbf",
-        boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h1>header</h1>
-    </header>
-  );
-};
+const Header: React.FC = () => (
+  <AppBar position="static" color="primary">
+    <Toolbar>
+      <Typography variant="h6" component="div">
+        Maleria Prediction Map
+      </Typography>
+    </Toolbar>
+  </AppBar>
+);
 
 export default Header;

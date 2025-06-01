@@ -3,14 +3,7 @@ from datetime import datetime, timedelta
 import pycountry_convert as pc
 import calendar
 import pandas as pd
-
-
-def continent_code(country: str) -> str:
-    continent = alpha3_to_continent(country)
-    if continent in CONT_MAP:
-        return CONT_MAP[continent]
-    else:
-        return "-1"
+import math
 
 def country_code(country: str) -> tuple:
     if country in PYCOUNTRY_MAP:
@@ -49,28 +42,21 @@ def create_weather_data(lat: float, lon: float, day: int, month: int, year: int)
     return summary # plug this right into the input for the model
 
 def alpha3_to_continent(alpha3):
-    try:
-        # Get the 2-letter country code from alpha3
-        country_alpha2 = pc.country_alpha3_to_country_alpha2(alpha3)
-        # Get continent code (e.g., 'NA', 'SA', 'AS', 'AF', 'OC', 'EU')
-        continent_code = pc.country_alpha2_to_continent_code(country_alpha2)
-        
-        # Map continent_code to your CONT_MAP keys
-        if continent_code in ['NA', 'SA']:
-            return CONT_MAP["Americas"]
-        elif continent_code == 'OC':
-            return CONT_MAP["Oceania"]
-        elif continent_code == 'AS':
-            return CONT_MAP["Asia"]
-        elif continent_code == 'AF':
-            return CONT_MAP["Africa"]
-        else:
-            # Europe (EU) or Antarctica (AN) or unknown
-            return None
-    except Exception as e:
-        # Handle missing/invalid alpha3 codes here
-        print(f"Warning: Could not map {alpha3} to continent: {e}")
-        return None
+    # Get the 2-letter country code from alpha3
+    country_alpha2 = pc.country_alpha3_to_country_alpha2(alpha3)
+    # Get continent code (e.g., 'NA', 'SA', 'AS', 'AF', 'OC', 'EU')
+    continent_code = pc.country_alpha2_to_continent_code(country_alpha2)
+
+    return CONTINENT_CODE_TO_NAME.get(continent_code, "Unknown")
+
+CONTINENT_CODE_TO_NAME = {
+    "NA": "Americas",
+    "SA": "Americas",
+    "OC": "Oceania",
+    "AS": "Asia",
+    "AF": "Africa",
+    "EU": "Europe",
+}
 
 WEATHER_COLS = [
     'month high',

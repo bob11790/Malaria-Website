@@ -1,7 +1,23 @@
 import ydf
 import pandas as pd
+import pycountry_convert as pc
 import ydf.model
+import math
+import numpy as np
 from helper_functions import helper_functions as hf
+
+def continent_code(continent: str) -> str:
+    if continent in CONT_MAP:
+        return CONT_MAP[continent]
+    else:
+        return "-1"
+    
+CONT_MAP = {
+        "Americas": 0,
+        "Oceania": 1,
+        "Asia":    2,
+        "Africa":  3,
+    }
 
 INPUT_FORMAT = [
     "latitude", # float
@@ -51,16 +67,16 @@ INPUT_VAL = [
     WEATHER["total rain"],
     WEATHER["most rain"],
     WEATHER["month high"],
-    hf.continent_code("Oceania"),
+    continent_code("Oceania"),
     COUNTRY_MEAN
     ]
 
 MODEL = ydf.load_model("ydf_malaria_weather_model")
 
-def predict(lat: float, lon: float, countryA3: str, continent: int, day: int, month: int, year: int) -> float:
+def predict(lat: float, lon: float, countryA3: str, continent: str, day: int, month: int, year: int, _debug:bool = False) -> float:
     WEATHER = hf.create_weather_data(lat, lon, day, month, year)
     COUNTRY, COUNTRY_MEAN = hf.country_code(countryA3)
-
+    CONTINENT = continent_code(continent)
     # Build dictionary using INPUT_FORMAT keys
     input_data = {
         "latitude": lat,
@@ -77,13 +93,29 @@ def predict(lat: float, lon: float, countryA3: str, continent: int, day: int, mo
         "total rain": WEATHER.get("total rain"),
         "most rain": WEATHER.get("most rain"),
         "most wind": WEATHER.get("most wind"),
-        "continentId": continent,
+        "continentId": CONTINENT,
         "mean_cases": COUNTRY_MEAN
     }
+    
 
     _in = pd.DataFrame([input_data], columns=INPUT_FORMAT)
     prediction = MODEL.predict(_in)[0]
-    return float(prediction)
+    if _debug == True:
+        print(input_data)
+    return {
+    "prediction": float(prediction),
+    "country": pc.country_alpha2_to_country_name(pc.country_alpha3_to_country_alpha2(countryA3)),
+    "date": {
+        "day": day,
+        "month": month,
+        "year": year
+    },
+    "weather_summary": WEATHER
+    }
+
+
+
+
 
 ## debug path:
 # import os

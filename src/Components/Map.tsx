@@ -13,72 +13,76 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
+interface MapProps {
+  onPrediction: (data: any) => void;
+}
+
 const normaliseLng = (lng: number) => {
   return ((((lng + 180) % 360) + 360) % 360) - 180;
 };
 
-const sendCoordinatesToBackend = async (coords: {
-  lat: number;
-  lng: number;
-  country: string;
-}) => {
-  try {
-    const response = await fetch("http://localhost:8000/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(coords),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to send coordinates");
-    }
-
-    const data = await response.json();
-    console.log("Server response:", data);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-function ClickHandler({
-  setClickedPosition,
-  setClickedCountry,
-}: {
-  setClickedPosition: (pos: L.LatLng) => void;
-  setClickedCountry: (country: string) => void;
-}) {
-  useMapEvents({
-    click: async (e) => {
-      const { lat, lng } = e.latlng;
-      const normalizedLng = normaliseLng(lng);
-
-      setClickedPosition(e.latlng);
-      console.log("Clicked coordinates:", lat, normalizedLng);
-
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${normalizedLng}`
-        );
-        const data = await response.json();
-        const country = data?.address?.country || "Unknown";
-
-        setClickedCountry(country);
-        sendCoordinatesToBackend({ lat, lng: normalizedLng, country });
-      } catch (err) {
-        console.error("Reverse geocoding failed:", err);
-      }
-    },
-  });
-
-  return null;
-}
-
-const Map = () => {
+const Map = ({ onPrediction }: MapProps) => {
   const [clickedPosition, setClickedPosition] = useState<L.LatLng | null>(null);
   const [clickedCountry, setClickedCountry] = useState<string | null>(null);
 
+  const sendCoordinatesToBackend = async (coords: {
+    lat: number;
+    lng: number;
+    country: string;
+  }) => {
+    try {
+      const response = await fetch("http://localhost:8000/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(coords),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send coordinates");
+      }
+
+      const data = await response.json();
+      console.log("Server response:", data);
+      onPrediction(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  function ClickHandler({
+    setClickedPosition,
+    setClickedCountry,
+  }: {
+    setClickedPosition: (pos: L.LatLng) => void;
+    setClickedCountry: (country: string) => void;
+  }) {
+    useMapEvents({
+      click: async (e) => {
+        const { lat, lng } = e.latlng;
+        const normalizedLng = normaliseLng(lng);
+
+        setClickedPosition(e.latlng);
+        console.log("Clicked coordinates:", lat, normalizedLng);
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${normalizedLng}`
+          );
+          const data = await response.json();
+          const country = data?.address?.country || "Unknown";
+
+          setClickedCountry(country);
+          sendCoordinatesToBackend({ lat, lng: normalizedLng, country });
+        } catch (err) {
+          console.error("Reverse geocoding failed:", err);
+        }
+      },
+    });
+
+    return null;
+  }
   return (
     <div
       style={{
@@ -110,14 +114,6 @@ const Map = () => {
         />
         {clickedPosition && <Marker position={clickedPosition} />}
       </MapContainer>
-
-      {clickedPosition && (
-        <div style={{ marginTop: 10, color: "#333" }}>
-          Clicked location: Latitude: {clickedPosition.lat.toFixed(5)},
-          Longitude: {normaliseLng(clickedPosition.lng).toFixed(5)} <br />
-          Country: {clickedCountry || "Loading..."}
-        </div>
-      )}
     </div>
   );
 };

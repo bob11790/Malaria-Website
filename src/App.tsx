@@ -5,6 +5,7 @@ import Header from "./Components/Header.tsx";
 function App() {
   return (
     <div style={{ height: "100vh", width: "100%" }}>
+      <Header />
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
